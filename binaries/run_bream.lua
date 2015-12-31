@@ -231,7 +231,7 @@ cmd:text()
 cmd:option('--learningRate', 0.01, 'learning rate')
 cmd:option('--l1',0.0,'the starting l1 coefficient')
 cmd:option('--maxL1',-1,'the l1 coefficient at the end of the process. -1 means that l1 will be constant during the process')
-cmd:option('--costs','','the cost of each feature (>=0) separated by a \':\'. If costs == "no" then a cost of one is associated with each features. ')
+cmd:option('--costs','no','the cost of each feature (>=0) separated by a \':\'. If costs == "no" then a cost of one is associated with each features. ')
 cmd:option('--maxEpoch', 1000, 'maximum number of epochs to run')
 cmd:option('--saturateEpoch', -1, 'The epoch where the  l1 value will reach "maxL1"')
 cmd:option('--burninEpoch', 0, 'Number of iterations where l1 is kept constant at the beginning of the process')
@@ -292,7 +292,6 @@ validation_dataset=splitted.validation
 --- isize is the input dimension, and osize is the output dimension
 local isize=train_dataset[1].x:size(1)
 local osize=train_dataset[1].y:size(1)
-
 
 local costs=nil
 
@@ -447,14 +446,14 @@ for iteration=1,opt.maxEpoch do
     --- Compute the ||py-y||^2 for each example in the minibatch. This error will be used as a reward signal. The reward is rescaled w.r.t its average on the minibatch to reduce the variance
     local individual_loss=pairwise:forward({py,y})
     assert(nb_examples==individual_loss:size(1))
-    local average_loss=pw:sum()/nb_examples
+    local average_loss=individual_loss:sum()/nb_examples
     individual_loss:add(-average_loss):mul(opt.ent_factor) -- the opt.ent_factor is used if one wants to reduce the influence of the loss on the policy.
     
     local leloss=LOSS:forward(py,y)
     loss=loss+leloss
     
     --- Set the reward value on the policies modules
-    model:reinforce(-pw)
+    model:reinforce(-individual_loss)
     
     --- Backpropagation
     local deltas=LOSS:backward(py,y)    

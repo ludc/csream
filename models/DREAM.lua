@@ -56,7 +56,8 @@ function DREAM:updateGModule()
   
   self.nmodule_policies={}
   for i=1,self.length do
-    self.nmodule_policies[i]=nn.Sequential():add(self.module_policies[i]):add(nn.ReLU()):add(csream.MyL1Penalty(torch.mul(self.weights,self.l1[i])))
+    print(self.costs)
+    self.nmodule_policies[i]=nn.Sequential():add(self.module_policies[i]):add(nn.ReLU()):add(csream.MyL1Penalty(torch.mul(self.costs,self.l1[i])))
   end
   
   local zt=initial_vector

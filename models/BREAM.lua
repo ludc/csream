@@ -31,8 +31,8 @@ function BREAM:__init(input_dimension,output_dimension,N,length,coef_l1,costs,in
   
   --- Here, the value of the probability is between smoothing and 1-smoothing in order to avoid log(0) values during learning
   self.smoothing=0.01
-  self.__mul=nn.MulConstant(); self.__mul.weight[1]=1.0-2*self.smoothing
-  self.__add=nn.AddConstant(self.input_dimension); self.__add.bias:fill(self.smoothing)
+  self.__mul=nn.MulConstant(1.0-2*self.smoothing);
+  self.__add=nn.AddConstant(self.smoothing);
   
   self:createModules()
   self:updateGModule()
