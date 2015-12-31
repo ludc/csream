@@ -33,21 +33,22 @@ function DREAM:createModules()
  self.module_policies={}
  for i=1,self.length do
    self.module_policies[i]=nn.Linear(self.N,self.input_dimension)  
-    
+end
+
   if (self.internal_cell=="add") 
   then 
    local iin=nn.Identity()()
    local phi=nn.Linear(self.input_dimension,self.N)(iin)
    local h=nn.Identity()()
    local a=nn.CAddTable()({h,phi})    
-   self.cells[i]=nn.gModule({h,iin},{a})
+   self.cell=nn.gModule({h,iin},{a})
   elseif (self.internal_cell=="rnn")
   then
     self.cell=csream.RNN():rnn_cell(self.input_dimension,self.N,self.N)
   else
-   self.cells[i]=csream.GRU():gru_cell(self.input_dimension,self.N)
+   self.cell=csream.GRU():gru_cell(self.input_dimension,self.N)
   end
- end
+self.cells=csream.ModelsUtils():clone_many_times(self.cell,self.length)
 end
 
 function DREAM:updateGModule()
