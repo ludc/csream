@@ -73,8 +73,8 @@ function DREAM:updateGModule()
 end
 
 function DREAM:reset(stdv,bias)
+  self.cell:reset(stdv)
   for i=1,self.length do
-    self.cells[i]:reset(stdv)
     
     self.module_policies[i]:reset(stdv)
     self.module_policies[i].bias:fill(bias)    
@@ -116,6 +116,8 @@ end
 
 function DREAM:updateParameters(learningRate)
    self.module:updateParameters(learningRate)
+  -- print(self.nmodule_policies[1].modules[1].gradWeight)
+   --os.exit(1)
 end
 
 -- we do not need to accumulate parameters when sharing

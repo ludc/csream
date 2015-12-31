@@ -7,7 +7,7 @@ local MyL1Penalty, parent = torch.class('csream.MyL1Penalty','nn.Module')
 
 function MyL1Penalty:__init(l1weight)
     parent.__init(self)
-    self.l1weight = l1weight     
+    self.l1weight = l1weight   
 end
     
 function MyL1Penalty:updateOutput(input)
@@ -21,7 +21,7 @@ end
 function MyL1Penalty:updateGradInput(input, gradOutput)
     self.gradInput:resizeAs(input)
     if (input:dim()==1) then
-        assert(input:size(1)==self.l1weight:size(1))        
+        assert(input:size(1)==self.l1weight:size(1))                
         self.gradInput:copy(input):sign():cmul(self.l1weight)    
         self.gradInput:add(gradOutput)  
     else
@@ -30,6 +30,7 @@ function MyL1Penalty:updateGradInput(input, gradOutput)
         for i=1,input:size(1) do
           self.gradInput[i]:copy(a[i]:cmul(self.l1weight))
         end
+        self.gradInput:add(gradOutput)
     end
 
     return self.gradInput 

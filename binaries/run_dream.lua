@@ -125,7 +125,10 @@ function computeAccuracyAndSparsity(set,model,device,weights)
         end
 
         --- Sparsity
-        local outputs=model:getPoliciesOutput()
+        local outputs=model:getPoliciesOutput()        
+       -- local vv,ii=outputs[1]:max(1)
+       -- print(vv)
+       -- if (model.cells[1].gradInput~=nil) then print(model.cells[1].gradInput[2]) end
           for i=1,#outputs do               
             if (sp_levels[i]==nil) then sp_levels[i]=0 end
             sp_levels[i]=sp_levels[i]+torch.eq(outputs[i],0):sum()/total:size(2)
