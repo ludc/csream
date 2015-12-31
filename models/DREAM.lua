@@ -9,7 +9,7 @@ function DREAM:__init(input_dimension,output_dimension,N,length,coef_l1,costs,in
   
   self.length=length
   self.internal_cell=internal_cell
-  assert((internal_cell=="add") or (internal_cell=="gru"),"Internal cell is 'add' or 'gru'")
+  assert((internal_cell=="add") or (internal_cell=="gru") or (internal_cell=="rnn"),"Internal cell is 'add' or 'gru' or 'rnn'")
   
   self.l1={}
   for tt=1,length do self.l1[tt]=coef_l1 end
