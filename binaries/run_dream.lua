@@ -231,7 +231,6 @@ cmd:option('--saturateEpoch', -1, 'The epoch where the  l1 value will reach "max
 cmd:option('--burninEpoch', 0, 'Number of iterations where l1 is kept constant at the beginning of the process')
 
 cmd:option('--evaluationEpoch', 10, 'Number of epochs after which an evaluation of the model is made on the training set')
-cmd:option('--evaluationEpochTest', 10, 'Number of epochs after which an evaluation of the model is made on all the sets')
 
 cmd:option('--dataset', '', 'input file (libSVM format)')
 cmd:option('--default_value', 0, 'Default value for empty features when loading from libSVM files')
@@ -269,7 +268,6 @@ end
 --- Initialization of the hyper-parameters
 if (opt.maxL1<0) then opt.maxL1=opt.l1 end
 if (opt.saturateEpoch<0) then opt.saturateEpoch=opt.maxEpoch end
-if (opt.evaluationEpochTest==0) then opt.evaluationEpochTest=opt.evaluationEpoch end
 
 --- Creation of the log (console or file)
 if (opt.verbose=='false') then log=csream.ExperimentLogCSV(false,opt.logPath,"now")
@@ -465,7 +463,6 @@ for iteration=1,opt.maxEpoch do
     log:addValue("l1_value",L1)
     log:addValue("lr_value",LR)
     print("At iteration "..iteration.." loss is "..loss.. " acc is "..acc_train.accuracy.." sp is "..acc_train.sparsity.." l1 is "..L1.." LR is "..LR)
-    if (iteration%opt.evaluationEpochTest==0) then
         
         acc_test=computeAccuracyAndSparsityCPU(test_dataset,model,opt.device,costs)
         acc_val=computeAccuracyAndSparsityCPU(validation_dataset,model,opt.device,costs)
@@ -476,8 +473,7 @@ for iteration=1,opt.maxEpoch do
         log:addValue("sparsity_validation",acc_val.sparsity)
         log:addValue("cost_test",acc_test.cost)
         log:addValue("cost_validation",acc_val.cost)
-    end
-   
+    
     --if sparsity is 1 during 10 evaluation, then stop the process since the model is not using any features...
     if (acc_train.sparsity>=0.999) then nb_max_sparsity=nb_max_sparsity+1 else nb_max_sparsity=0 end
     if (nb_max_sparsity>10) then os.exit(1) end
