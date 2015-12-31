@@ -126,8 +126,7 @@ function computeAccuracyAndSparsity(set,model,device,weights)
         --- Sparsity
         local outputs=model:getPoliciesOutput()
         local probas=model:getPoliciesProbas()
-         local vv,ii=probas[1]:max(1)
-        print(vv)
+         
        
           for i=1,#outputs do               
             if (sp_levels[i]==nil) then sp_levels[i]=0 end
