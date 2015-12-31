@@ -10,6 +10,7 @@ include('MyL1Penalty.lua')
 
 include('BREAM.lua')
 include('DREAM.lua')
+include('MREAM.lua')
 
 include('ExperimentLog.lua')
 include('ExperimentLogConsole.lua')
