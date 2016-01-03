@@ -1,197 +1,94 @@
 import "csvigo"
 import 'gnuplot'
+import 'lfs'
 
-function keptLines(read,index,opt)
-  local lkept={}
+function clone(a)
+  local r={}
+  for k,v in pairs(a) do
+    r[k]=v
+  end
+  return(r)
+end
+
+--- returns a sub table keeping only lines such that index_column=value
+function filter(ttable,index_column,value)
+  local retour={}
   local pos=1
-  for j=2,#read do
-    local kept=true
-    
-    
-    if (opt.dataset~="") then
-      local ddataset=read[j][index["dataset"]]
-      if (not (string.match(ddataset,opt.dataset))) then kept=false end
-    end
-    
-    if (opt.size~="") then
-      local dsize=read[j][index["size"]]
-      if (dsize~=opt.size) then kept=false end
-    end
-    
-    if (opt.N~="") then 
-	    if (read[j][index["N"]]~=opt.N) then 
-        
-		kept=false 
+  for i=1,#ttable do
+    if (ttable[i][index_column]==value) then
+      retour[pos]=clone(ttable[i])
+      pos=pos+1
     end
   end
-
-    if (opt.cell~="") then 
-	    if (read[j][index["cell"]]~=opt.cell) then 			
-		kept=false end    
-	end
-  
-    if (opt.ent_factor~="") then 
-	    if (read[j][index["ent_factor"]]~=opt.ent_factor) then 			
-		kept=false end    
-	end
-    
-  
-    if (opt.bias~="") then 
-	    if (read[j][index["bias"]]~=opt.bias) then 			
-		kept=false end    
-	end
-  
-    if (opt.l1_discount~="") then 
-	    if (read[j][index["l1_discount"]]~=opt.l1_discount) then 			
-		kept=false end    
-	end
-    
-    if (kept) then lkept[pos]=read[j]; pos=pos+1 end
-  end    
-  print("KEEPT = "..#lkept)
-  return lkept
+  return retour
 end
 
-function keptBest(lkept,index)
+---- Keep the best accuracy for each cost level
+function keepBestAccuracy(ttable,column_cost,column_accuracy)
    local best_accuracy={}
    local best_accuracy_index={}
-   for i=1,#lkept do
-     local sp=lkept[i][index["sparsity_train"]]
-     local acc=lkept[i][index["accuracy_train"]]
+   for i=1,#ttable do
+     local sp=tonumber(ttable[i][column_cost])
+     local acc=tonumber(ttable[i][column_accuracy])     
      if(best_accuracy[sp]==nil) then best_accuracy[sp]=acc; best_accuracy_index[sp]=i end
      if(best_accuracy[sp]<acc) then best_accuracy[sp]=acc; best_accuracy_index[sp]=i  end
    end
    
-   local llkept={}
+   local retour={}
    local pos=1
    for k,v in pairs(best_accuracy_index) do
-     llkept[pos]=lkept[v]
+     retour[pos]=clone(ttable[v])
      pos=pos+1
     end  
-    return(llkept)
+  return(retour)
 end
-
-function keptBest_validation(lkept,index)
-   local best_accuracy={}
-   local best_accuracy_index={}
-   for i=1,#lkept do
-     local sp=lkept[i][index["sparsity_validation"]]
-     local acc=lkept[i][index["accuracy_validation"]]
---     print(sp); print(acc);
-     if(best_accuracy[sp]==nil) then best_accuracy[sp]=acc; best_accuracy_index[sp]=i end
-     if(best_accuracy[sp]<acc) then best_accuracy[sp]=acc; best_accuracy_index[sp]=i  end
-   end
-   
-   local llkept={}
-   local pos=1
-   for k,v in pairs(best_accuracy_index) do
-     llkept[pos]=lkept[v]
-     pos=pos+1
-    end  
-    return(llkept)
-end
-
 
 function keepColumn(t,i)
   local c=torch.Tensor(#t)
   local pos=1
   for j=1,#t do
-    c[pos]=t[j][i]
+    c[pos]=tonumber(t[j][i])
     pos=pos+1
   end
   return c
 end
   
+--- Assumes that lines hve been sorted by increasing sparsity. 
+function pareto(ttable,column_cost,column_accuracy)
  
---- Assumes that lines hve been sorted by increasing sparsity
-function pareto(lkept,index)
- 
-   local llkept={}
-   llkept[1]=lkept[1]
-   local pos=2
-   local sp=lkept[1][index["sparsity_train"]]
-   local acc=lkept[1][index["accuracy_train"]]
-   for j=2,#lkept do
-     
-     local ssp=lkept[j][index["sparsity_train"]]
-     local sacc=lkept[j][index["accuracy_train"]]
-     --print(ssp.." vs "..sp.." / "..sacc.." vs "..acc)
-     if ((ssp<sp) and (sacc>acc)) then
-       llkept[pos]=lkept[j]
-       pos=pos+1
-       sp=ssp
-       acc=sacc
-     end
-    end
-   return(llkept)
-end
- 
-function pareto_validation(lkept,index,prec)
- 
-   local llkept={}
-   llkept[1]=lkept[1]
-   local pos=2
-   local sp=lkept[1][index["sparsity_validation"]]
-   local acc=lkept[1][index["accuracy_validation"]]
-   for j=2,#lkept do
-     
-     local ssp=lkept[j][index["sparsity_validation"]]
-     local sacc=lkept[j][index["accuracy_validation"]]
-    -- print(ssp.." vs "..sp.." / "..sacc.." vs "..acc)
-     if ((tonumber(ssp)<tonumber(sp)) and (tonumber(sacc)>tonumber(acc)*prec)) then
-       llkept[pos]=lkept[j]
-       pos=pos+1
-       sp=ssp
-       acc=sacc
-     end
-    end
-   local ff=#llkept
-   llkept[ff+1]={}
-   for k,v in pairs(llkept[ff]) do
-	llkept[ff+1][k]=v
-   end
-   llkept[ff+1][index["sparsity_validation"]]=0
-   llkept[ff+1][index["sparsity_test"]]=0
-   llkept[ff+1][index["sparsity_train"]]=0	
-   return(llkept)
-end
- 
-function doAll(read,index,opt)
-  local lkept=keptLines(read,index,opt)
-  print(#lkept.." lines kept.")
-  if (#lkept==0) then return nil end
-  ---- Remove lines with same sparisty (keeping the best)
- -- lkept=keptBest(lkept,index,opt)
-  lkept=keptBest_validation(lkept,index,opt)
-  print(#lkept.." lines kept.")
-  ---- Sort lines by training_sparsity
-  function sort_sparsity(a,b)
-    return tonumber(a[index["sparsity_validation"]])>tonumber(b[index["sparsity_validation"]])
+  -- First sort retour from low cost to high cost
+  function sort_cost(a,b)
+    return tonumber(a[column_cost])<tonumber(b[column_cost])
   end
-  table.sort(lkept,sort_sparsity)
-
-  ---- Keep pareto front
---  llkept=pareto(lkept,index)
-  llkept=pareto_validation(lkept,index,opt.precision)
-  print(#llkept.." lines kept in pareto front")
-  return llkept
+  table.sort(ttable,sort_cost)
+  
+  -- Second: filter
+   local retour={}
+   retour[1]=ttable[1]
+   local pos=2
+   local sp=tonumber(ttable[1][column_cost])
+   local acc=tonumber(ttable[1][column_accuracy])
+   for j=2,#ttable do     
+     local ssp=tonumber(ttable[j][column_cost])
+     local sacc=tonumber(ttable[j][column_accuracy])
+     if (sacc>acc) then
+       retour[pos]=clone(ttable[j])
+       pos=pos+1
+       sp=ssp
+       acc=sacc
+     end
+    end
+   return(retour)
 end
- 
+
  
 cmd=torch.CmdLine()
 cmd:text()
-cmd:option('--dataset', '', 'name of the dataset')
-cmd:option('--file', '', 'name of the input CSV file')
-cmd:option('--file2', '', 'name of the input CSV file')
-cmd:option('--N', '', 'restrict to particular values of N')
-cmd:option('--cell', '', 'restrict to particular cells')
-cmd:option('--ent_factor', '', '')
-cmd:option('--bias', '', '')
-cmd:option('--l1_discount', '', '')
+cmd:option('--files', '', 'name of the input CSV file separed by :')
+cmd:option('--directory', '', 'name of the input directory (reading only .csv files)')
+cmd:option('--filters', '', 'the filters separated by ":"')
+cmd:option('--by', '', '')
 cmd:option('--output', '', '')
-cmd:option('--computeSparsity', 'false', '')
-
-cmd:option('--precision',1,'')
 cmd:text()
 
 local opt = cmd:parse(arg or {})
@@ -199,141 +96,150 @@ if not opt.silent then
    print(opt)
 end
 
- 
-local read=csvigo.load{path=opt.file,separator='\t',verbose=false,mode='raw'}
- local index={}
- for i=1,#read[1] do
-   index[read[1][i]]=i
- end
- print("Read "..#read)
-   collectgarbage()
-if (opt.file2~="") then
-  local read2=csvigo.load{path=opt.file2,separator='\t',verbose=false,mode='raw'}
-  local pos=#read+1
-  for y=2,#read2 do
-    local t={}      
-    for yy=1,#read2[1] do
-      
-      local c=read2[1][yy]
-      local ii=index[c]
-      if (ii~=nil) then t[ii]=read2[y][yy] end
+
+------ READING filters
+local filters={}
+do
+  local pos=1
+  if (opt.filters~="") then
+    for w in string.gmatch(opt.filters,"[^:]+") do  
+      local token=string.gmatch(w,"[^=]+")
+      local key=token()
+      local value=token()
+      filters[pos]={}
+      filters[pos].key=key
+      filters[pos].value=value
+      pos=pos+1
     end
-    read[pos]=t
-    pos=pos+1
   end
 end
-print("Read "..#read)
- 
-read2=nil
-print("End fusion") 
-
- 
- local distinct_values={}
- for k,_ in pairs(index) do
-   distinct_values[k]={}
- end
- for i=2,#read do
-   for j=1,#read[i] do
-     local k=read[1][j]
-     distinct_values[k][read[i][j]]=1
-    end
+print("Filters are: ")
+for _,v in pairs(filters) do
+  print("\t"..v.key.." = "..v.value)
 end
-print(distinct_values)
-os.exit(1)
 
-local sp={}
-local acc={}
-
-SIZES={"1","2","3","4","5","6","7","8","9","10","15","20"}
-if (opt.output~="") then
-  for v,k in pairs(SIZES) do
-    opt.size=k
-    local llkept=doAll(read,index,opt)
-    if (llkept~=nil) then
-      sp=keepColumn(llkept,index["sparsity_train"])
-      acc=keepColumn(llkept,index["accuracy_train"])
-      spv=keepColumn(llkept,index["sparsity_validation"])
-      accv=keepColumn(llkept,index["accuracy_validation"])
-      spt=keepColumn(llkept,index["sparsity_test"])
-      acct=keepColumn(llkept,index["accuracy_test"])         
-      io.output(opt.output..".size="..k)  
-      for j=1,sp:size(1) do
-        io.write(sp[j].." "..acc[j].." "..spv[j].." "..accv[j].." "..spt[j].." "..acct[j].."\n")
-      end   
-      io.close()
-      io.output(io.stdout)
+---------------- filenames... ------------------
+local filenames={}
+if (opt.files~='') then 
+  for w in string.gmatch(opt.files,"[^:]+") do filenames[#filenames+1]=w end
+else
+  for file in lfs.dir(opt.directory) do    
+    if (string.find(file,".csv$")) then 
+      filenames[#filenames+1]=opt.directory.."/"..file
     end
   end
 end
 
-io.output(io.stdout)
-
-LEVELS={0,0.25,0.5,0.75,1.0}
-if (opt.computeSparsity=="true") then
-  for v,k in pairs(SIZES) do
-    print("SIZE = "..k)
-   opt.size=k
-   local llkept=doAll(read,index,opt)
-    
-  sp=keepColumn(llkept,index["sparsity_validation"])
-  acc=keepColumn(llkept,index["accuracy_validation"])
-  
-  for _,k in pairs(LEVELS) do 
-      io.stdout:write(" Sparsity="..k.." : ")
-      local s=sp[1]
-      local a=acc[1]
-      if (s<=k) 
-      then 
-        io.stdout:write(" "..a.."("..s..")")
+---------------- READING all files in the 'read' table --------------
+local first=true
+local read={}
+local index={}
+local size_index=0;
+local pos=1
+print("Reading "..#filenames.." files... ('#' are problems)")
+do
+    for _,w in pairs(filenames) do
+      io.write('.'); io.flush()
+      local rr=csvigo.load{path=w,separator='\t',verbose=false,mode='raw'}
+      if ((rr==nil) or (#rr==0))  then io.write('#'); io.flush() 
       else
-        local pos=2
-        local flag=true
-        while(flag) do
-          if (sp[pos]<k) then
-            local ratio=(k-sp[pos])/(s-sp[pos])
-            local aa=ratio*acc[pos]+(1-ratio)*a
-            flag=false
-            io.stdout:write(" "..aa)
-          else
-            a=acc[pos]
-            s=sp[pos]
-            pos=pos+1
-            if (pos==sp:size(1)+1) then 
-              io.stdout:write(" "..a.."("..s..")")
-              flag=false
-            end
+        
+        --- Update index
+        for i=1,#rr[1] do
+          local k=rr[1][i]
+          if (index[k]==nil) then 
+            index[k]=size_index+1; size_index=size_index+1 
+            --- filling missing values
+          end
+        end
+              
+        for line=2,#rr do
+          local t={}      
+          for column=1,#rr[1] do      
+            local key=rr[1][column]            
+            local ii=index[key]            
+            t[ii]=rr[line][column]
+          end
+          
+          local keep=true
+          for _,f in pairs(filters) do
+            local i=index[f.key]
+            assert(i~=nil,"Unknown filter key "..f.key)
+            if (t[i]~=f.value) then keep=false end
+          end
+          if (keep) then
+            read[pos]=t;                     
+            pos=pos+1 
           end
         end
       end
-  end  
-    print("")
-end
-end
-
-local sss="sparsity_test"
-local aaa="accuracy_test"
-
-
-local pos=1
-  toplot={}
-for _,k in pairs(SIZES) do
-  opt.size=k
-  local llkept=doAll(read,index,opt)
-  if (llkept~=nil) then
-    sp[k]=keepColumn(llkept,index[sss])  
-    acc[k]=keepColumn(llkept,index[aaa])
-    local n=sp[k]:size(1)
-    if (n>0) then
-        print("KKEEPPP")
-    toplot[#toplot+1]={"size "..k,sp[k],acc[k],"lines ls "..pos}
-    pos=pos+1
     end
-    
+   -- print("Reading "..w.." = "..#read)
+end
+io.write("\n");
+print("Finding "..#read.." lines")
+print("Columns are: ")
+for k,_ in pairs(index) do
+  io.write(k.." ")
+end
+io.write("\n")
+
+------------------- Computing the distinct values for all columns
+print("Computing distinct values for the columns....")
+local distinct_values={}
+for k,_ in pairs(index) do
+  distinct_values[k]={}
+end
+for i=2,#read do
+  for k,v in pairs(index) do
+    if (read[i][v]~=nil) then
+      distinct_values[k][read[i][v]]=1
+    end
   end
 end
 
-  print(toplot)
 
-  gnuplot.plot(toplot)
+-----------------------------------------------------------------------------------
+---- Simple pareto
+if (opt.by=="") then
+    local nt=keepBestAccuracy(read,index["cost_validation"],index["accuracy_validation"])
+    nt=pareto(read,index["cost_validation"],index["accuracy_validation"])  
+    cost=keepColumn(nt,index["cost_test"])
+    accuracy=keepColumn(nt,index["accuracy_test"])
+    gnuplot.plot({"all",cost,accuracy,"lines ls 1"})
+else
+  local td={}
+  local name={}
+  local cost={}
+  local acc={}
+  
+  local pos=1
+  local i=index[opt.by]; assert(i~=nil) 
+  for v,_ in pairs(distinct_values[opt.by]) do
+    print("Computing pareto curve for "..opt.by.." = "..v)
+    local nt=filter(read,i,v)
+    nt=keepBestAccuracy(nt,index["cost_validation"],index["accuracy_validation"])
+    nt=pareto(nt,index["cost_validation"],index["accuracy_validation"])  
+    cost[pos]=keepColumn(nt,index["cost_test"])
+    acc[pos]=keepColumn(nt,index["accuracy_test"])   
+    name[pos]=opt.by.."="..v
+  
+    if (opt.output~="") then
+      io.output(opt.output.."."..name[pos])
+      io.write("#cost_alidation accuracy_validation\n")
+      for jj=1,cost[pos]:size(1) do        
+        io.write(cost[pos][jj].." "..acc[pos][jj].."\n");
+      end      
+      io.output(io.stdout)
+    end
+  
+    td[pos]={name[pos],cost[pos],acc[pos],"linespoints ls "..pos} 
+    pos=pos+1
+   -- gnuplot.plot(td[#td])
+  end  
+  gnuplot.plot(td)
+  
+end  
+os.exit(1)
 
---gnuplot.plot({"test",spt,acct,"lines ls 2"},{"validation",spv,accv,"lines ls 3"})
+
