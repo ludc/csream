@@ -1,6 +1,6 @@
 # Description
 
-The software implemnts the 3 models (M-REAM, B-REAM and D-REAM) described in the article [waiting for publication]
+The software implements the 3 models (M-REAM, B-REAM and D-REAM) described in the article [waiting for publication]
 
 ##Dependencies
 
@@ -33,7 +33,7 @@ A each iteration, the model computes the performance over the three files. The P
 * **verbose**: 
   * false = the output of the model ill be saved in a CSV file in the 'logPath' directory.
   * true = the model will output on the console
-* **logPath: the directory of the log file. Note that the filename is automaticcally defined in such a way that two experiments will generate two files with two different names. Note also that all the parameters are saved in the log file.
+* **logPath**: the directory of the log file. Note that the filename is automaticcally defined in such a way that two experiments will generate two files with two different names. Note also that all the parameters are saved in the log file.
 * **costs**: the cost model
   * no = all features have a weight of 1
   * linear = feature 1 as a cost of 1/n, feature 2 has a cost of 2/n, ... where n is the total number of features
