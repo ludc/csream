@@ -66,8 +66,21 @@ In B-REAM, the model samples many features at each time step.
 D-ream has the same parameters than M-REAM (but learns without sampling, and is thus faster during training)
 
 
+
+#Interpretation of the results
+
+In order to compute global performance of the models, we provide the **compute_pareto_front.lua** script. The principle is the following:
+* The script reads all the output CSV files in a particular directory
+* The script only kept the lines that follow the **filters** argument such as *N=5:learningRate=0.01* 
+* The script then computes the pareto front of the resulting values:
+  * the pareto front is computed on the validation set (using the *cost_validation* and *accuracy_validation* columns)
+  * the pareto front is then drawn (and saved) on the testing set (using the *cost_test* and *accuracy_test* columns)
+* One front is drawn saved for each value of the **by** column. For example the parameters *--by size* allows one to output one curve for each *size* value in the experiment files
+
 # Examples
 
-Here is a learning example that will generate outputs in the 'log/' subdirectory using the 'abalone' dataset with one third as training set, one third as validation set and one thrid as testing set
+Here is a learning example that will generate outputs in the 'log/' subdirectory using the 'abalone' dataset with one third as training set, one third as validation set and one thrid as testing set. Many experiments will be launched, and the pareto curves will be drawn on the resulting files
 
 ... To be continued
+
+
