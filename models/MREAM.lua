@@ -74,7 +74,7 @@ function MREAM:updateGModule(cuda)
   
   self.nmodule_policies={}
   for i=1,self.length do
-    self.nmodule_policies[i]=nn.Sequential():add(self.module_policies[i]):add(nn.SoftMax()):add(self.__mul:clone()):add(self.__add:clone()):add(csream.MyL1Penalty(torch.mul(self.weights,self.l1[i]))):add(nn.ReinforceBernoulli())
+    self.nmodule_policies[i]=nn.Sequential():add(self.module_policies[i]):add(nn.SoftMax()):add(self.__mul:clone()):add(self.__add:clone()):add(csream.MyL1Penalty(torch.mul(self.weights,self.l1[i]))):add(nn.ReinforceCategorical())
   end
   
   
