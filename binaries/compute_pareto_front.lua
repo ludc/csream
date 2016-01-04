@@ -88,6 +88,7 @@ cmd:option('--files', '', 'name of the input CSV file separed by :')
 cmd:option('--directory', '', 'name of the input directory (reading only .csv files)')
 cmd:option('--filters', '', 'the filters separated by ":"')
 cmd:option('--by', '', '')
+cmd:option('--sparsity', 'false', '')
 cmd:option('--output', '', '')
 cmd:text()
 
@@ -96,6 +97,8 @@ if not opt.silent then
    print(opt)
 end
 
+COST=COST."_"
+if (opt.sparsity=="true") then COST="sparsity_" end
 
 ------ READING filters
 local filters={}
@@ -202,9 +205,9 @@ end
 -----------------------------------------------------------------------------------
 ---- Simple pareto
 if (opt.by=="") then
-    local nt=keepBestAccuracy(read,index["cost_validation"],index["accuracy_validation"])
-    nt=pareto(read,index["cost_validation"],index["accuracy_validation"])  
-    cost=keepColumn(nt,index["cost_test"])
+    local nt=keepBestAccuracy(read,index[COST."_validation"],index["accuracy_validation"])
+    nt=pareto(read,index[COST."_validation"],index["accuracy_validation"])  
+    cost=keepColumn(nt,index[COST."_test"])
     accuracy=keepColumn(nt,index["accuracy_test"])
     gnuplot.plot({"all",cost,accuracy,"lines ls 1"})
 else
@@ -218,9 +221,9 @@ else
   for v,_ in pairs(distinct_values[opt.by]) do
     print("Computing pareto curve for "..opt.by.." = "..v)
     local nt=filter(read,i,v)
-    nt=keepBestAccuracy(nt,index["cost_validation"],index["accuracy_validation"])
-    nt=pareto(nt,index["cost_validation"],index["accuracy_validation"])  
-    cost[pos]=keepColumn(nt,index["cost_test"])
+    nt=keepBestAccuracy(nt,index[COST."_validation"],index["accuracy_validation"])
+    nt=pareto(nt,index[COST."_validation"],index["accuracy_validation"])  
+    cost[pos]=keepColumn(nt,index[COST."_test"])
     acc[pos]=keepColumn(nt,index["accuracy_test"])   
     name[pos]=opt.by.."="..v
   
