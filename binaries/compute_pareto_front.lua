@@ -224,9 +224,9 @@ end
 -----------------------------------------------------------------------------------
 ---- Simple pareto
 if (opt.by=="") then
-    local nt=keepBestAccuracy(read,index[COST.."__validation"],index["accuracy_validation"])
-    nt=pareto(read,index[COST.."__validation"],index["accuracy_validation"])  
-    cost=keepColumn(nt,index[COST.."__test"])
+    local nt=keepBestAccuracy(read,index[COST.."_validation"],index["accuracy_validation"])
+    nt=pareto(read,index[COST.."_validation"],index["accuracy_validation"])  
+    cost=keepColumn(nt,index[COST.."_test"])
     accuracy=keepColumn(nt,index["accuracy_test"])
     gnuplot.plot({"all",cost,accuracy,"lines ls 1"})
 else
@@ -240,9 +240,9 @@ else
   for v,_ in pairs(distinct_values[opt.by]) do
     print("Computing pareto curve for "..opt.by.." = "..v)
     local nt=filter(read,i,v)
-    nt=keepBestAccuracy(nt,index[COST.."__validation"],index["accuracy_validation"])
-    nt=pareto(nt,index[COST.."__validation"],index["accuracy_validation"])  
-    cost[pos]=keepColumn(nt,index[COST.."__test"])
+    nt=keepBestAccuracy(nt,index[COST.."_validation"],index["accuracy_validation"])
+    nt=pareto(nt,index[COST.."_validation"],index["accuracy_validation"])  
+    cost[pos]=keepColumn(nt,index[COST.."_test"])
     acc[pos]=keepColumn(nt,index["accuracy_test"])   
     name[pos]=opt.by.."="..v
   
