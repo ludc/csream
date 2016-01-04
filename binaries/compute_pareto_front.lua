@@ -2,6 +2,25 @@ import "csvigo"
 import 'gnuplot'
 import 'lfs'
 
+function interpolate(x,y,level)
+  local pos=1
+  local last_x=x[1]
+  local last_y=y[1]
+  while(x[pos]<level) do
+    last_x=x[pos]
+    last_y=y[pos]
+    pos=pos+1
+    if (pos>x:size(1)) then return(0/0) end
+  end
+  local new_x=x[pos]
+  local new_y=y[pos]
+  local e_x=new_x-last_x
+  local e_y=new_y-last_y
+  local d_x=(level-last_x)/e_x
+  local d_y=d_x*e_y+last_y
+  return d_y
+end
+
 function clone(a)
   local r={}
   for k,v in pairs(a) do
@@ -97,8 +116,8 @@ if not opt.silent then
    print(opt)
 end
 
-COST=COST."_"
-if (opt.sparsity=="true") then COST="sparsity_" end
+COST="cost"
+if (opt.sparsity=="true") then COST="sparsity" end
 
 ------ READING filters
 local filters={}
