@@ -115,6 +115,7 @@ cmd:option('--directory', '', 'name of the input directory (reading only .csv fi
 cmd:option('--filters', '', 'the filters separated by ":"')
 cmd:option('--by', '', '')
 cmd:option('--sparsity', 'false', '')
+cmd:option('--sparsity_interpolation_step', 0.1, '')
 cmd:option('--output', '', '')
 cmd:text()
 
@@ -230,12 +231,26 @@ end
 
 -----------------------------------------------------------------------------------
 ---- Simple pareto
+if (opt.sparsity=="true") then
+  io.write("Interpolation levels:")
+  local level=0
+  while(level<=1) do io.write(" "..level); level=level+opt.sparsity_interpolation_step end
+  io.write("\n");
+end
+
 if (opt.by=="") then
     local nt=keepBestAccuracy(read,index[COST.."_validation"],index["accuracy_validation"])
     nt=pareto(read,index[COST.."_validation"],index["accuracy_validation"])  
     cost=keepColumn(nt,index[COST.."_test"])
     accuracy=keepColumn(nt,index["accuracy_test"])
     gnuplot.plot({"all",cost,accuracy,"lines ls 1"})
+    
+  if (opt.sparsity=="true") then
+    io.write("Interpolated values:")
+    local level=0
+    while(level<=1) do io.write(" "..interpolate(cost,accuracy,level); level=level+opt.sparsity_interpolation_step end
+    io.write("\n");  
+  end
 else
   local td={}
   local name={}
