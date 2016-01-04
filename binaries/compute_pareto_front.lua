@@ -77,9 +77,13 @@ end
 --- Assumes that lines hve been sorted by increasing sparsity. 
 function pareto(ttable,column_cost,column_accuracy,sparsity)
  
-  -- First sort retour from low cost to high cost
+  -- First sort retour from low cost to high cost  
   function sort_cost(a,b)
-    return tonumber(a[column_cost])<tonumber(b[column_cost])
+    if (sparsity) then
+      return tonumber(a[column_cost])>tonumber(b[column_cost])
+    else
+      return tonumber(a[column_cost])<tonumber(b[column_cost])
+    end
   end
   table.sort(ttable,sort_cost)
   
@@ -92,7 +96,6 @@ function pareto(ttable,column_cost,column_accuracy,sparsity)
    for j=2,#ttable do     
      local ssp=tonumber(ttable[j][column_cost])
      local sacc=tonumber(ttable[j][column_accuracy])
-     if (sparsity) then ssp=-ssp end
      
      if (sacc>acc) then
        retour[pos]=clone(ttable[j])
