@@ -6,6 +6,8 @@ function interpolate(x,y,level)
   local pos=1
   local last_x=x[1]
   local last_y=y[1]
+  if (x[1]>level) then return(0/0) end
+  
   while(x[pos]<level) do
     last_x=x[pos]
     last_y=y[pos]
@@ -73,7 +75,7 @@ function keepColumn(t,i)
 end
   
 --- Assumes that lines hve been sorted by increasing sparsity. 
-function pareto(ttable,column_cost,column_accuracy)
+function pareto(ttable,column_cost,column_accuracy,sparsity)
  
   -- First sort retour from low cost to high cost
   function sort_cost(a,b)
@@ -90,6 +92,8 @@ function pareto(ttable,column_cost,column_accuracy)
    for j=2,#ttable do     
      local ssp=tonumber(ttable[j][column_cost])
      local sacc=tonumber(ttable[j][column_accuracy])
+     if (sparsity) then ssp=-ssp end
+     
      if (sacc>acc) then
        retour[pos]=clone(ttable[j])
        pos=pos+1
@@ -241,7 +245,7 @@ else
     print("Computing pareto curve for "..opt.by.." = "..v)
     local nt=filter(read,i,v)
     nt=keepBestAccuracy(nt,index[COST.."_validation"],index["accuracy_validation"])
-    nt=pareto(nt,index[COST.."_validation"],index["accuracy_validation"])  
+    nt=pareto(nt,index[COST.."_validation"],index["accuracy_validation"],opt.sparsity=="true")  
     cost[pos]=keepColumn(nt,index[COST.."_test"])
     acc[pos]=keepColumn(nt,index["accuracy_test"])   
     name[pos]=opt.by.."="..v
