@@ -2,13 +2,13 @@ import "csvigo"
 import 'gnuplot'
 import 'lfs'
 
-function interpolate(x,y,level)
+function interpolate_sparsity(x,y,level)
   local pos=1
   local last_x=x[1]
   local last_y=y[1]
-  if (x[1]>level) then return(0/0) end
+  if (x[1]<level) then return(0/0) end
   
-  while(x[pos]<level) do
+  while(x[pos]>level) do
     last_x=x[pos]
     last_y=y[pos]
     pos=pos+1
@@ -240,7 +240,7 @@ end
 
 if (opt.by=="") then
     local nt=keepBestAccuracy(read,index[COST.."_validation"],index["accuracy_validation"])
-    nt=pareto(read,index[COST.."_validation"],index["accuracy_validation"])  
+    nt=pareto(read,index[COST.."_validation"],index["accuracy_validation"],opt.sparsity=="true")  
     cost=keepColumn(nt,index[COST.."_test"])
     accuracy=keepColumn(nt,index["accuracy_test"])
     gnuplot.plot({"all",cost,accuracy,"lines ls 1"})
@@ -248,7 +248,7 @@ if (opt.by=="") then
   if (opt.sparsity=="true") then
     io.write("Interpolated values:")
     local level=0
-    while(level<=1) do io.write(" "..interpolate(cost,accuracy,level); level=level+opt.sparsity_interpolation_step end
+    while(level<=1) do io.write(" "..interpolate_sparsity(cost,accuracy,level)); level=level+opt.sparsity_interpolation_step end
     io.write("\n");  
   end
 else
@@ -260,14 +260,21 @@ else
   local pos=1
   local i=index[opt.by]; assert(i~=nil) 
   for v,_ in pairs(distinct_values[opt.by]) do
-    print("Computing pareto curve for "..opt.by.." = "..v)
+--    print("Computing pareto curve for "..opt.by.." = "..v)
     local nt=filter(read,i,v)
     nt=keepBestAccuracy(nt,index[COST.."_validation"],index["accuracy_validation"])
     nt=pareto(nt,index[COST.."_validation"],index["accuracy_validation"],opt.sparsity=="true")  
     cost[pos]=keepColumn(nt,index[COST.."_test"])
     acc[pos]=keepColumn(nt,index["accuracy_test"])   
     name[pos]=opt.by.."="..v
-  
+
+    if (opt.sparsity=="true") then
+       io.write("Interpolated values for "..name[pos].." :")
+    local level=0
+    while(level<=1) do io.write(" "..interpolate_sparsity(cost[pos],acc[pos],level)); level=level+opt.sparsity_interpolation_step end
+    io.write("\n");  
+  end
+
     if (opt.output~="") then
       io.output(opt.output.."."..name[pos])
       io.write("#cost_alidation accuracy_validation\n")
